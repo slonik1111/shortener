@@ -1,0 +1,20 @@
+# Бинарные файлы Go
+go-shortener
+*.exe
+*.test
+
+# Папки зависимостей
+vendor/
+go/pkg/
+
+# Файлы IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Логи
+*.log
+
+# Environment variables
+.env

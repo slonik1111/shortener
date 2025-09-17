@@ -5,11 +5,10 @@ import (
 	"html/template"	
 	"math/rand"
 	"net/http"
+	"github.com/slonik1111/shortener/internal/db"
 )
 
 var page = template.Must(template.ParseFiles("templates/index.html"))
-
-var storage = make(map[string]string)
 
 type ShortenRequest struct {
 	URL string `json:"url"`
@@ -22,7 +21,8 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	short := r.URL.Path[1:]
-	if fullURL, ok := storage[short]; ok {
+
+	if fullURL, err := db.GetOriginalURL(short); err == nil {
 		http.Redirect(w, r, fullURL, http.StatusFound)
 		return 
 	}
@@ -60,7 +60,7 @@ func ShortenHandler(w http.ResponseWriter, r *http.Request) {
 	generatedShort := generateShortURL()
 	shortURL := "http://localhost:8080/" + generatedShort
 
-	storage[generatedShort] = longURL
+	db.AddURL(generatedShort, longURL)
 	contentType := r.Header.Get("Content-Type")
 
 	if contentType == "application/json" {

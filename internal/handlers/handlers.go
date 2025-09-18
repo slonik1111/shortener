@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"net/http"
 	"github.com/slonik1111/shortener/internal/db"
+	"github.com/slonik1111/shortener/internal/kvstorage"
+	"log"
 )
 
 var page = template.Must(template.ParseFiles("templates/index.html"))
@@ -22,7 +24,14 @@ func RootHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	short := r.URL.Path[1:]
 
+	if fullURL, err := kvstorage.GetOriginalURL(short); err == nil {
+		log.Println("Взято из Redis:", fullURL)
+		http.Redirect(w, r, fullURL, http.StatusFound)
+		return
+	}
+
 	if fullURL, err := db.GetOriginalURL(short); err == nil {
+		log.Println("Взято из db:", fullURL)
 		http.Redirect(w, r, fullURL, http.StatusFound)
 		return 
 	}
@@ -60,6 +69,7 @@ func ShortenHandler(w http.ResponseWriter, r *http.Request) {
 	generatedShort := generateShortURL()
 	shortURL := "http://localhost:8080/" + generatedShort
 
+	kvstorage.AddURL(generatedShort, longURL)
 	db.AddURL(generatedShort, longURL)
 	contentType := r.Header.Get("Content-Type")
 

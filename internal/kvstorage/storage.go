@@ -5,24 +5,35 @@ import (
 	"github.com/redis/go-redis/v9"
 	"log"
 	"time"
+	"os"
 )
 
 var rdb *redis.Client
 
 func InitRedis() {
+	host := os.Getenv("REDIS_HOST")
+	port := os.Getenv("REDIS_PORT")
+	if host == "" {
+		host = "localhost"
+	}
+	if port == "" {
+		port = "6379"
+	}
+
+	addr := host + ":" + port
 	rdb = redis.NewClient(&redis.Options{
-		Addr:    "localhost:6379",
+		Addr: addr,
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	_, err := rdb.Ping(ctx).Result()
-	if err != nil {
+	if _, err := rdb.Ping(ctx).Result(); err != nil {
 		log.Fatal("Ошибка подключения к Redis:", err)
 	}
-	log.Println("Подключение к Redis успешно")
+	log.Println("Подключение к Redis успешно:", addr)
 }
+
 
 func AddURL(shortCode, originalURL string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
